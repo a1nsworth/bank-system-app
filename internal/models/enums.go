@@ -29,3 +29,41 @@ func (enum *baseIntEnum) Scan(src any) error {
 	*enum = baseIntEnum(v)
 	return nil
 }
+
+var (
+	BankMaxInterestRate uint8 = 20
+	BankMaxTotalSum           = uint32(16)
+	BankMaxRating       uint8 = 100
+)
+
+type OfficeStatus baseIntEnum
+
+const (
+	OfficeActive OfficeStatus = 1 << iota
+	OfficeAbleToPlaceAtm
+	OfficeCreditAvailable
+)
+
+func (of OfficeStatus) Name() string {
+	return reflect.TypeOf(of).Name()
+}
+
+type AtmStatus baseIntEnum
+
+const (
+	AtmActive AtmStatus = 1 << iota
+	AtmHaveMoney
+	AtmWorkToDespenseMoney
+	AtmAbleWithdraw
+)
+
+type EmployeeStatus baseIntEnum
+
+const (
+	EmployeeIsRemote EmployeeStatus = 1 << iota
+	EmployeeCanGiveLoans
+)
+
+func (as AtmStatus) Name() string {
+	return reflect.TypeOf(as).Name()
+}

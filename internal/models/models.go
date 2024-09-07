@@ -4,56 +4,19 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
-	"reflect"
 	"time"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
-var (
-	BankMaxInterestRate uint8 = 20
-	BankMaxTotalSum           = uint32(16)
-	BankMaxRating       uint8 = 100
-)
-
-type OfficeStatus baseIntEnum
-
-const (
-	OfficeActive OfficeStatus = 1 << iota
-	OfficeAbleToPlaceAtm
-	OfficeCreditAvailable
-)
-
-func (of OfficeStatus) Name() string {
-	return reflect.TypeOf(of).Name()
-}
-
-type AtmStatus baseIntEnum
-
-const (
-	AtmActive AtmStatus = 1 << iota
-	AtmHaveMoney
-	AtmWorkToDespenseMoney
-	AtmAbleWithdraw
-)
-
-type EmployeeStatus baseIntEnum
-
-const (
-	EmployeeIsRemote EmployeeStatus = 1 << iota
-	EmployeeCanGiveLoans
-)
-
-func (as AtmStatus) Name() string {
-	return reflect.TypeOf(as).Name()
-}
-
 type Bank struct {
 	gorm.Model
 	Name         string `gorm:"size:256;unique"`
 	BankOffices  []BankOffice
 	BankAtms     []BankAtm
+	Users        []User `gorm:"many2many:banks_users"`
+	Employees    []Employee
 	Rating       uint8
 	TotalSum     uint32
 	InterestRate uint8
@@ -84,10 +47,18 @@ func (b *Bank) CountOffices() int {
 	return len(b.BankOffices)
 }
 
+func (b *Bank) CountUsers() int {
+	return len(b.Users)
+}
+
+func (b *Bank) CountEmployees() int {
+	return len(b.Employees)
+}
+
 type BankOffice struct {
 	gorm.Model
-	Addres string       `gorm:"size:100"`
-	Status OfficeStatus `gorm:"type_office_status"`
+	Addres string        `gorm:"size:100"`
+	Status *OfficeStatus `gorm:"type_office_status"`
 	Rental uint32
 
 	Bank   Bank
@@ -96,8 +67,8 @@ type BankOffice struct {
 
 type BankAtm struct {
 	gorm.Model
-	Name         string    `gorm:"size:30"`
-	Status       AtmStatus `gorm:"type:atm_status"`
+	Name         string     `gorm:"size:30"`
+	Status       *AtmStatus `gorm:"type:atm_status"`
 	Amortization uint
 
 	Bank                 Bank
@@ -119,13 +90,10 @@ func (atm BankAtm) TotalSum() uint32 {
 
 type Employee struct {
 	gorm.Model
-	FirstName      string `gorm:"size:30"`
-	SecondName     string `gorm:"size:30"`
-	PatronymicName string `gorm:"size:30"`
-	DateOfBirth    datatypes.Date
+	personModel
 
 	Position string
-	Status   EmployeeStatus
+	Status   *EmployeeStatus
 	Salary   uint
 
 	Bank                 Bank
@@ -133,10 +101,37 @@ type Employee struct {
 	BankID, BankOfficeID uint
 }
 
-type CreditAccount struct {
+type User struct {
 	gorm.Model
+	personModel
+
+	PlaceOfWork     string `gorm:"size:30"`
+	MonthlyIncome   uint
+	BankCreditScore uint
+
+	BanksUsed       []Bank `gorm:"many2many:banks_users"`
+	CreditAccounts  []CreditAccount
+	PaymentAccounts []PaymentAccount
 }
 
-type PaymentAccount struct{}
+type PaymentAccount struct {
+	gorm.Model
+	UserID, BankID uint
+	Bank           Bank
+	User           User
 
-type User struct{}
+	Balance uint
+}
+
+type CreditAccount struct {
+	gorm.Model
+	UserID, BankID, EmployeeID, PaymentAccountID uint
+	User                                         User
+	Bank                                         Bank
+	Employee                                     Employee
+	PaymentAccount                               PaymentAccount
+
+	LoanStartDate, LoanEndDate                datatypes.Date
+	LoanDurationMounts                        uint8
+	LoanAmount, MounthlyPayment, InterestRate uint
+}
