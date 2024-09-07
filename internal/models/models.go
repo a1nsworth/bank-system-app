@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
+	"reflect"
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +16,38 @@ var (
 	BankMaxTotalSum           = uint32(16)
 	BankMaxRating       uint8 = 100
 )
+
+type OfficeStatus baseIntEnum
+
+const (
+	OfficeActive OfficeStatus = 1 << iota
+	OfficeAbleToPlaceAtm
+	OfficeCreditAvailable
+)
+
+func (of OfficeStatus) Name() string {
+	return reflect.TypeOf(of).Name()
+}
+
+type AtmStatus baseIntEnum
+
+const (
+	AtmActive AtmStatus = 1 << iota
+	AtmHaveMoney
+	AtmWorkToDespenseMoney
+	AtmAbleWithdraw
+)
+
+type EmployeeStatus baseIntEnum
+
+const (
+	EmployeeIsRemote EmployeeStatus = 1 << iota
+	EmployeeCanGiveLoans
+)
+
+func (as AtmStatus) Name() string {
+	return reflect.TypeOf(as).Name()
+}
 
 type Bank struct {
 	gorm.Model
@@ -52,17 +86,56 @@ func (b *Bank) CountOffices() int {
 
 type BankOffice struct {
 	gorm.Model
+	Addres string       `gorm:"size:100"`
+	Status OfficeStatus `gorm:"type_office_status"`
+	Rental uint32
+
+	Bank   Bank
 	BankID uint
 }
 
 type BankAtm struct {
 	gorm.Model
-	BankID uint
+	Name         string    `gorm:"size:30"`
+	Status       AtmStatus `gorm:"type:atm_status"`
+	Amortization uint
+
+	Bank                 Bank
+	BankOffice           BankOffice
+	BankOfficeID, BankID uint
 }
 
-type CreditAccount struct{}
+func (atm BankAtm) Addres() string {
+	return atm.BankOffice.Addres
+}
 
-type Employee struct{}
+func (atm BankAtm) Owner() string {
+	return atm.Bank.Name
+}
+
+func (atm BankAtm) TotalSum() uint32 {
+	return atm.Bank.TotalSum
+}
+
+type Employee struct {
+	gorm.Model
+	FirstName      string `gorm:"size:30"`
+	SecondName     string `gorm:"size:30"`
+	PatronymicName string `gorm:"size:30"`
+	DateOfBirth    datatypes.Date
+
+	Position string
+	Status   EmployeeStatus
+	Salary   uint
+
+	Bank                 Bank
+	BankOffice           BankOffice
+	BankID, BankOfficeID uint
+}
+
+type CreditAccount struct {
+	gorm.Model
+}
 
 type PaymentAccount struct{}
 

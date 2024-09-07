@@ -29,7 +29,7 @@ func Run() {
 
 	bank := models.Bank{
 		Name:        "SBERID",
-		BankAtms:    []models.BankAtm{{}},
+		BankAtms:    []models.BankAtm{{Status: models.AtmHaveMoney | models.AtmAbleWithdraw}},
 		BankOffices: []models.BankOffice{{}},
 	}
 	result := db.Create(&bank)
