@@ -4,5 +4,6 @@ import "gorm.io/gorm"
 
 type Database interface {
 	GetConnection() *gorm.DB
-	MigrateModels(models ...any) error
+	Migrate(models ...any) error
+	Drop(models ...any) error
 }

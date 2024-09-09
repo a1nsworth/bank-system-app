@@ -9,8 +9,8 @@ type SQLiteDatabase struct {
 	db *gorm.DB
 }
 
-func NewSQLiteDatabase(dsn string, config *gorm.Config) (*SQLiteDatabase, error) {
-	db, err := gorm.Open(sqlite.Open(dsn), config)
+func NewSQLiteDatabase(path string, config *gorm.Config) (*SQLiteDatabase, error) {
+	db, err := gorm.Open(sqlite.Open(path), config)
 	if err != nil {
 		return nil, err
 	}
@@ -21,6 +21,10 @@ func (db *SQLiteDatabase) GetConnection() *gorm.DB {
 	return db.db
 }
 
-func (db *SQLiteDatabase) MigrateModels(models ...any) error {
+func (db *SQLiteDatabase) Migrate(models ...any) error {
 	return db.db.AutoMigrate(models...)
+}
+
+func (db *SQLiteDatabase) Drop(models ...any) error {
+	return db.db.Migrator().DropTable(models...)
 }

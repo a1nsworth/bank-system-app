@@ -6,6 +6,8 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"bank-system-app/internal/database"
+
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -25,6 +27,7 @@ type Bank struct {
 func (b *Bank) BeforeCreate(tx *gorm.DB) (err error) {
 	r := rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())))
 	b.Rating = uint8(r.Int32N(int32(BankMaxRating + 1)))
+
 	fmt.Println("rating", b.Rating)
 	b.TotalSum = uint32(r.Int32N(int32(BankMaxTotalSum + 1)))
 	fmt.Println("totalSum", b.TotalSum)
@@ -134,4 +137,37 @@ type CreditAccount struct {
 	LoanStartDate, LoanEndDate                datatypes.Date
 	LoanDurationMounts                        uint8
 	LoanAmount, MounthlyPayment, InterestRate uint
+}
+
+func MigrateTables(database database.Database) (err error) {
+	println("MIGRATE")
+	err = database.Migrate(
+		&Bank{},
+		&BankOffice{},
+		&BankAtm{},
+		&Employee{},
+		&User{},
+		&PaymentAccount{},
+		&CreditAccount{},
+	)
+	if err != nil {
+		return
+	}
+	return err
+}
+
+func DropTables(database database.Database) (err error) {
+	err = database.Drop(
+		&Bank{},
+		&BankOffice{},
+		&BankAtm{},
+		&Employee{},
+		&User{},
+		&PaymentAccount{},
+		&CreditAccount{},
+	)
+	if err != nil {
+		return
+	}
+	return err
 }

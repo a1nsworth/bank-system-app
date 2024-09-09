@@ -1,29 +1,56 @@
 package services
 
-type CrudService[T any] struct {
-	repo Repository[T]
+import (
+	"bank-system-app/internal/models/constraints"
+	"bank-system-app/internal/repositories"
+
+	"gorm.io/gorm"
+)
+
+type baseService[TModel any, TId constraints.ID] struct {
+	repository repositories.Repository[TModel, TId]
 }
 
-func NewCrudService[T any](repo Repository[T]) *CrudService[T] {
-	return &CrudService[T]{repo: repo}
+func newBaseService[TModel any, TId constraints.ID](
+	db *gorm.DB,
+	model TModel,
+) baseService[TModel, TId] {
+	return baseService[TModel, TId]{
+		repository: repositories.NewGormRepository[TModel, TId](db, model),
+	}
 }
 
-func (s *CrudService[T]) Create(model *T) (*T, error) {
-	return s.repo.Create(model)
+type crudService[TModel any, TId constraints.ID] struct {
+	baseService[TModel, TId]
 }
 
-func (s *CrudService[T]) GetByID(id uint) (*T, error) {
-	return s.repo.GetByID(id)
+func newCRUDService[TModel any, TId constraints.ID](
+	db *gorm.DB,
+	model TModel,
+) crudService[TModel, TId] {
+	return crudService[TModel, TId]{baseService: newBaseService[TModel, TId](db, model)}
 }
 
-func (s *CrudService[T]) GetAll() ([]T, error) {
-	return s.repo.GetAll()
+func (s *crudService[TModel, TId]) Create(model *TModel) (*TModel, error) {
+	return s.repository.Create(model)
 }
 
-func (s *CrudService[T]) Update(model *T) (*T, error) {
-	return s.repo.Update(model)
+func (s *crudService[TModel, TId]) GetByID(id TId) (*TModel, error) {
+	return s.repository.GetByID(id)
 }
 
-func (s *CrudService[T]) Delete(id uint) error {
-	return s.repo.Delete(id)
+func (s *crudService[TModel, TId]) GetAll() ([]TModel, error) {
+	return s.repository.GetAll()
+}
+
+func (s *crudService[TModel, TId]) Update(model *TModel) (*TModel, error) {
+	return s.repository.Update(model)
+}
+
+func (s *crudService[TModel, TId]) DeleteById(id TId) error {
+	return s.repository.DeleteById(id)
+}
+
+func (s *crudService[TModel, TId]) DeleteByConditions(conditions ...any) error {
+	return s.repository.DeleteByConditions(conditions)
 }
