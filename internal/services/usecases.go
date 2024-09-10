@@ -24,15 +24,14 @@ func exampleUsage() {
 	if err = models.MigrateTables(db); err != nil {
 		panic("Failed to migrate models:")
 	}
-	conn := db.GetConnection()
 
-	bankService := NewBankService(conn)
-	bankOfficeService := NewBankOfficeService(conn)
-	atmService := NewBankAtmService(conn)
-	employeeService := NewEmployeeService(conn)
-	userService := NewUserService(conn)
-	paymentService := NewPaymentAccountService(conn)
-	creditService := NewCreditAccountService(conn)
+	bankService := NewBankService(db)
+	bankOfficeService := NewBankOfficeService(db)
+	atmService := NewBankAtmService(db)
+	employeeService := NewEmployeeService(db)
+	userService := NewUserService(db)
+	paymentService := NewPaymentAccountService(db)
+	creditService := NewCreditAccountService(db)
 
 	bank := &models.Bank{Name: "Test Bank"}
 	createdBank, err := bankService.Create(bank)
